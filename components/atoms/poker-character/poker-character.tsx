@@ -23,6 +23,8 @@ export const PokerCharacter = ({
     vote?: number,
     revealed?: boolean
   ) => {
+    if (typeof vote === "string") return vote;
+
     if (!status) return "-";
 
     const states: { [key in RoomDataStatus]: string | number | undefined } = {
@@ -59,6 +61,8 @@ export const PokerCharacter = ({
 
   const parseCharacterColor = (character: IPlayerData) => {
     if (character.raiseHand) return "yellow.500";
+
+    if (typeof character.vote === "string") return "purple.800";
 
     if (character.vote) return "dino.primary";
 
