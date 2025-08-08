@@ -26,7 +26,6 @@ export const PokerMenu = () => {
               <Flex>{Component}</Flex>
             </div>
           ))}
-          <MenuRaiseHand />
         </Flex>
       </Grid>
       {/* <Grid display={["block", "block", "none"]}>
