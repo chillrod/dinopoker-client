@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Link as LinkChakra } from "@chakra-ui/react";
+import { Box, Flex, Link as LinkChakra } from "@chakra-ui/react";
 import useTranslation from "next-translate/useTranslation";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -8,7 +8,6 @@ import Image from "next/image";
 
 export const Nav = () => {
   const router = useRouter();
-  const { route } = router;
 
   const { t, lang } = useTranslation("common");
 
@@ -20,10 +19,10 @@ export const Nav = () => {
       position="sticky"
       top={0}
       zIndex={10}
-      background="dino.base5"
-      boxShadow="0 4px 30px rgba(0, 0, 0, 0.1)"
-      backdropFilter="blur(5px)"
-      border="1px solid rgba(255, 255, 255, 0.3"
+      background="rgba(33, 33, 33, 0.6)"
+      boxShadow="0 4px 30px rgba(0, 0, 0, 0.25)"
+      backdropFilter="blur(12px) saturate(150%)"
+      borderBottom="1px solid rgba(255, 255, 255, 0.08)"
     >
       <Flex
         h={16}
@@ -37,14 +36,6 @@ export const Nav = () => {
               <DinoPoker />
             </LinkChakra>
           </Link>
-          {route === "/" && (
-            <Link href="/wheel">
-              <LinkChakra href="/wheel">
-                Daily Wheel
-                <Badge color="dino.primary">New</Badge>
-              </LinkChakra>
-            </Link>
-          )}
         </Box>
         {id && <PokerMenu />}
       </Flex>

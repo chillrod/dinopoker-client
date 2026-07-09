@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "dinopoker-room": {
+      ".read": "auth != null",
+      ".write": false,
+      "$roomId": {
+        "players": {
+          "$playerId": {
+            ".write": "auth != null && auth.uid === $playerId"
+          }
+        }
+      }
+    }
+  }
+}

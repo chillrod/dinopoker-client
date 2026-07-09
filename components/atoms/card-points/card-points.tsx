@@ -14,11 +14,27 @@ export const CardPoints = ({
 }: ICardPoints) => {
   return (
     <Button
-      _hover={{ bg: selected ? "dino.primary" : 'dino.base2' }}
+      _hover={
+        disabled
+          ? undefined
+          : {
+              bg: selected ? "dino.primary" : "dino.base2",
+              transform: "translateY(-6px)",
+              boxShadow: "0 12px 24px rgba(0, 0, 0, 0.35)",
+            }
+      }
+      transition="all 0.15s ease"
       disabled={disabled}
       role="@dino-cardpoint"
       onClick={() => onClick && onClick(point)}
       size="sm"
+      borderRadius="xl"
+      border="1px solid rgba(255, 255, 255, 0.06)"
+      boxShadow={
+        selected
+          ? "0 8px 20px rgba(119, 85, 204, 0.45)"
+          : "0 4px 12px rgba(0, 0, 0, 0.25)"
+      }
       bg={selected ? "dino.primary" : "dino.base3"}
       width={["auto", "6em"]}
       height={["9em", "8em"]}

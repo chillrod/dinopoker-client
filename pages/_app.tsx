@@ -12,11 +12,16 @@ import ScreenLoading from "../components/templates/_screen-loading";
 import { emitter } from "../services/emitter/emitter";
 import Head from "next/head";
 import { AnimatePresence, motion } from "framer-motion";
+import { AuthService } from "../services/auth/auth.service";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [loading, setLoading] = useState<{ show: boolean; message?: string }>({
     show: false,
   });
+
+  useEffect(() => {
+    AuthService.ensureSignedIn();
+  }, []);
 
   useEffect(() => {
     emitter.on("EMIT_SCREENLOADING", (data) => {
