@@ -191,14 +191,18 @@ export const Poker = () => {
             </Text>
             <Stack
               direction="row"
-              flexWrap="wrap"
+              flexWrap="nowrap"
+              overflowX="auto"
+              overflowY="hidden"
               w={["80vw", "80vw", "100%", "100%"]}
               margin="0 auto"
-              justifyContent="center"
+              justifyContent={{ base: "flex-start", md: "center" }}
+              px={2}
+              py={1}
             >
               {VoteSystemOptions[ROOM_DATA.voteSystem]?.voteSystem.map(
                 (number: number) => (
-                  <Box key={number}>
+                  <Box key={number} flexShrink={0}>
                     <CardPoints
                       disabled={
                         handleDisabled(ROOM_DATA.players) ||
