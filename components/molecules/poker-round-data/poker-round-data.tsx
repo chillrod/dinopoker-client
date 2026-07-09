@@ -77,6 +77,11 @@ export const PokerRoundData = ({
         gridTemplateColumns="10% 50% 10%"
         gridTemplateRows="auto auto auto"
         gap={4}
+        p={{ base: 6, md: 10 }}
+        borderRadius="3xl"
+        bg="rgba(255, 255, 255, 0.02)"
+        border="1px solid rgba(255, 255, 255, 0.06)"
+        boxShadow="0 20px 60px rgba(0, 0, 0, 0.35)"
         gridTemplateAreas={`
                        "left top right"
                        "left table right"
@@ -88,6 +93,8 @@ export const PokerRoundData = ({
           p={5}
           h="100px"
           borderRadius="full"
+          border="1px solid rgba(255, 255, 255, 0.06)"
+          boxShadow="0 8px 24px rgba(0, 0, 0, 0.35)"
           area="table"
         >
           <Flex

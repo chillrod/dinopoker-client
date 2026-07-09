@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { AlertCircle } from "react-feather";
 
-import { getLocalStorage } from "../../../services/local-storage/handler";
+import { AuthService } from "../../../services/auth/auth.service";
 import { NotificationsService } from "../../../services/notifications/notifications.service";
 import { RoomsService } from "../../../services/rooms/rooms.service";
 import { IconButton } from "../../atoms/icon-button/icon-button";
@@ -24,7 +24,7 @@ export const MenuRaiseHand = () => {
         roomId: id,
         key: "raiseHand",
         value: !raisingHand,
-        player: getLocalStorage("user-client-key"),
+        player: AuthService.getUid(),
       });
     } catch (err: any) {
       NotificationsService.emitToast(err.message);

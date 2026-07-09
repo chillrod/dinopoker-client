@@ -7,6 +7,7 @@ export const PlainTemplate = ({
   areas,
   align,
   justify,
+  minH = "100vh",
 }: {
   children: React.ReactElement[] | React.ReactElement;
   cols?: string[];
@@ -14,6 +15,7 @@ export const PlainTemplate = ({
   areas?: string[];
   align?: string;
   justify?: string;
+  minH?: string;
 }) => {
   return (
     <Container maxW="container.xl">
@@ -21,7 +23,7 @@ export const PlainTemplate = ({
         alignItems={align}
         justifyItems={justify}
         bg="dino.base5"
-        minH="100vh"
+        minH={minH}
         p={6}
         gridTemplateRows={rows}
         gridTemplateColumns={cols}

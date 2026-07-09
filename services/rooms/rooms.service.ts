@@ -1,13 +1,31 @@
-import { child, get, getDatabase, push, ref, remove, set, update } from "firebase/database";
+import { child, get, getDatabase, ref } from "firebase/database";
 
 import { appFirebase } from "../../config/firebase/firebase";
 import { InitializePlayerData, IPlayerData } from "../../model/PlayerData";
 import { RoomDataStatus } from "../../model/RoomData";
-import { makeUuid } from "../../utils/MakeUuid";
-import { getLocalStorage, setLocalStorage } from "../local-storage/handler";
+import { AuthService } from "../auth/auth.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
 const db = getDatabase(appFirebase);
+
+const callRoomsApi = async (path: string, body: Record<string, any>) => {
+  const token = await AuthService.getIdToken();
+
+  const response = await fetch(`/api/rooms/${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data.error || "Request failed");
+
+  return data;
+};
 
 export const RoomsService = {
   async CREATE_ROOM({
@@ -17,45 +35,20 @@ export const RoomsService = {
     player: IPlayerData;
     voteSystem: string;
   }) {
-    const roomId = makeUuid();
+    const { roomId } = await callRoomsApi("create", { voteSystem });
 
     const playerData = InitializePlayerData({
       ...player,
       room: roomId,
     });
 
-    try {
-      await set(ref(db, "dinopoker-room/" + roomId), {
-        id: roomId,
-        status: RoomDataStatus.PENDING,
-        voteSystem: voteSystem,
-      });
-
-      return { playerFromCreateRoom: playerData };
-    } catch (err: any) {
-      throw new Error(err);
-    }
+    return { playerFromCreateRoom: playerData };
   },
 
   async JOIN_ROOM({ player }: { player: IPlayerData }) {
-    try {
-      const room = await get(ref(db, "dinopoker-room/" + player.room));
+    if (!player.room) throw new Error("Room not found");
 
-      if (!room.exists() || !player.room) {
-        throw new Error("Room not found");
-      }
-
-      const data = await push(
-        ref(db, "dinopoker-room/" + player.room + "/players"),
-        {
-          ...player,
-        }
-      ).then((res) => res);
-
-      setLocalStorage("user-client-key", data.key);
-    } catch (err: any) {
-      throw new Error(err);
-    }
+    await callRoomsApi("join", { roomId: player.room, player });
   },
 
   async UPDATE_PLAYER({
@@ -71,13 +64,7 @@ export const RoomsService = {
   }) {
     if (!player) return;
 
-    await set(
-      child(
-        ref(db),
-        "dinopoker-room/" + roomId + "/players/" + player + `/${key}`
-      ),
-      value
-    );
+    await callRoomsApi("update-player", { roomId, player, key, value });
   },
 
   async UPDATE_ROOM({
@@ -91,29 +78,33 @@ export const RoomsService = {
   }) {
     if (!roomId) return;
 
-    await set(child(ref(db), "dinopoker-room/" + roomId + "/" + key), value);
+    await callRoomsApi("update-room", { roomId, key, value });
   },
 
   async CHECK_STATE({ roomId }: { roomId?: string | string[] }) {
+    const currentUser = await AuthService.ensureSignedIn();
+
     const room = await get(ref(db, "dinopoker-room/" + roomId));
 
     const players = await get(
       ref(db, "dinopoker-room/" + roomId + "/players")
     ).then((res) => res);
 
-    if (!getLocalStorage("user-client-key"))
+    const playerId = currentUser.uid;
+
+    if (!playerId)
       return NotificationsService.emitRoomState({
         hasPlayer: false,
         hasRoom: room.exists(),
       });
 
-    const hasChild = players.hasChild(getLocalStorage("user-client-key"));
+    const hasChild = players.hasChild(playerId);
 
     return NotificationsService.emitRoomState({
       hasPlayer: hasChild,
       hasRoom: room.exists(),
       ...(hasChild && {
-        player: players.child(getLocalStorage("user-client-key")),
+        player: players.child(playerId),
       }),
     });
   },
@@ -121,26 +112,19 @@ export const RoomsService = {
   PLAYER_NODE({ roomId }: { roomId?: string | string[] }) {
     return child(
       ref(db),
-      `dinopoker-room/${roomId}/players/${getLocalStorage("user-client-key")}`
+      `dinopoker-room/${roomId}/players/${AuthService.getUid()}`
     );
   },
 
   async SET_SPECTATOR({ roomId }: { roomId?: string | string[] }) {
-    const player = getLocalStorage("user-client-key");
+    if (!roomId) return;
 
-    if (player)
-      await set(
-        child(ref(db), "dinopoker-room/" + roomId + "/players/" + player),
-        "spectator"
-      );
+    await callRoomsApi("set-spectator", { roomId });
   },
 
   async PLAYER_REMOVE({ roomId }: { roomId?: string | string[] }) {
-    const player = getLocalStorage("user-client-key");
+    if (!roomId) return;
 
-    if (player)
-      await remove(
-        child(ref(db), "dinopoker-room/" + roomId + "/players/" + player)
-      );
+    await callRoomsApi("remove-player", { roomId });
   },
 };

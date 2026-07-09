@@ -1,4 +1,12 @@
-import { Box, Center, Grid, GridItem, Spinner, Stack } from "@chakra-ui/react";
+import {
+  Box,
+  Center,
+  Container,
+  GridItem,
+  Spinner,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { DataSnapshot, getDatabase, onValue, ref } from "firebase/database";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -7,8 +15,8 @@ import { appFirebase } from "../../config/firebase/firebase";
 import { VoteSystemOptions } from "../../config/vote-system/vote-system";
 import { IPlayerData } from "../../model/PlayerData";
 import { IRoomData, RoomDataStatus } from "../../model/RoomData";
+import { AuthService } from "../../services/auth/auth.service";
 import { emitter } from "../../services/emitter/emitter";
-import { getLocalStorage } from "../../services/local-storage/handler";
 import { PlayerService } from "../../services/player/player.service";
 import { RoomsService } from "../../services/rooms/rooms.service";
 import { CardPoints } from "../atoms/card-points/card-points";
@@ -53,45 +61,72 @@ export const Poker = () => {
   };
 
   useEffect(() => {
-    const subscribeStatus = onValue(status({ id }), (data) => {
-      if (data.val() === RoomDataStatus.PENDING) {
-        RoomsService.UPDATE_PLAYER({
-          roomId: id,
-          key: "vote",
-          value: null,
-          player: getLocalStorage("user-client-key"),
-        });
-      }
+    if (!id) return;
 
-      SET_ROOM_DATA((prevState) => ({ ...prevState, status: data.val() }));
-    });
+    let subscribeStatus = () => {};
+    let subscribeVoteSystem = () => {};
+    let subscribePlayers = () => {};
+    let cancelled = false;
 
-    const subscribeVoteSystem = onValue(voteSystem({ id }), (data) => {
-      SET_ROOM_DATA((prevState) => ({ ...prevState, voteSystem: data.val() }));
-    });
+    AuthService.ensureSignedIn().then((user) => {
+      if (cancelled) return;
 
-    const subscribePlayers = onValue(players({ id }), (data) => {
-      SET_ROOM_DATA((prevState) => ({ ...prevState, players: data.val() }));
+      subscribeStatus = onValue(
+        status({ id }),
+        (data) => {
+          if (data.val() === RoomDataStatus.PENDING) {
+            RoomsService.UPDATE_PLAYER({
+              roomId: id,
+              key: "vote",
+              value: null,
+              player: user.uid,
+            });
+          }
 
-      if (!getLocalStorage("user-client-key")) return;
+          SET_ROOM_DATA((prevState) => ({ ...prevState, status: data.val() }));
+        },
+        (error) => console.error("[dinopoker] status subscription error", error)
+      );
 
-      const currentPlayer = data.child(getLocalStorage("user-client-key"));
+      subscribeVoteSystem = onValue(
+        voteSystem({ id }),
+        (data) => {
+          SET_ROOM_DATA((prevState) => ({
+            ...prevState,
+            voteSystem: data.val(),
+          }));
+        },
+        (error) =>
+          console.error("[dinopoker] voteSystem subscription error", error)
+      );
 
-      if (currentPlayer.val() === "spectator") {
-        SET_CURRENT_PLAYER(currentPlayer.val());
+      subscribePlayers = onValue(
+        players({ id }),
+        (data) => {
+          SET_ROOM_DATA((prevState) => ({ ...prevState, players: data.val() }));
 
-        return PlayerService.SET_SPECTATOR(true);
-      }
+          const currentPlayer = data.child(user.uid);
 
-      SET_CURRENT_PLAYER({ ...currentPlayer.val(), id: currentPlayer.key });
+          if (currentPlayer.val() === "spectator") {
+            SET_CURRENT_PLAYER(currentPlayer.val());
+
+            return PlayerService.SET_SPECTATOR(true);
+          }
+
+          SET_CURRENT_PLAYER({ ...currentPlayer.val(), id: currentPlayer.key });
+        },
+        (error) =>
+          console.error("[dinopoker] players subscription error", error)
+      );
     });
 
     return () => {
+      cancelled = true;
       subscribeStatus();
       subscribeVoteSystem();
       subscribePlayers();
     };
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     emitter.on("SET_SPECTATOR", (data) => {
@@ -106,80 +141,87 @@ export const Poker = () => {
   return (
     <>
       <PlainTemplate
-        areas={[
-          `
-            "poker"
-            "poker"
-            "vote"
-            `,
-          `
-            "poker"
-            "poker"
-            "vote"
-            `,
-          `
-            "poker"
-            "poker"
-            "vote"
-            `,
-          `
-            "poker"
-            "poker"
-            "vote"
-            `,
-        ]}
-        cols={["1fr", "1fr", "1fr", "1fr"]}
-        rows={["auto auto 1fr", "auto auto 1fr ", "auto auto 1fr"]}
+        minH="calc(100vh - 65px)"
+        align="center"
+        justify="center"
+        cols={["1fr"]}
+        rows={["1fr"]}
+        areas={[`"poker"`]}
       >
         {ROOM_DATA.players ? (
-          <>
-            <GridItem area="poker" justifyContent="center" alignSelf="start">
-              <PokerRoundData
-                currentPlayers={handleCurrentPlayers(ROOM_DATA.players)}
-                roomStatus={ROOM_DATA?.status}
-              />
-            </GridItem>
-            <GridItem area="vote" alignSelf="center" justifySelf="center">
-              <Stack
-                overflow="auto"
-                direction="row"
-                maxW="100vw"
-                w={["80vw", "80vw", "100%", "100%"]}
-                margin="0 auto"
-              >
-                {VoteSystemOptions[ROOM_DATA.voteSystem]?.voteSystem.map(
-                  (number: number) => (
-                    <Box key={number}>
-                      <CardPoints
-                        disabled={
-                          handleDisabled(ROOM_DATA.players) ||
-                          CURRENT_PLAYER === "spectator"
-                        }
-                        onClick={(vote) =>
-                          RoomsService.UPDATE_PLAYER({
-                            roomId: id,
-                            player: CURRENT_PLAYER?.id,
-                            value: CURRENT_PLAYER?.vote === vote ? 0 : vote,
-                            key: "vote",
-                          })
-                        }
-                        selected={CURRENT_PLAYER?.vote === number}
-                        point={number}
-                      />
-                    </Box>
-                  )
-                )}
-              </Stack>
-            </GridItem>
-          </>
+          <GridItem area="poker" w="100%" pb={{ base: "200px", md: "180px" }}>
+            <PokerRoundData
+              currentPlayers={handleCurrentPlayers(ROOM_DATA.players)}
+              roomStatus={ROOM_DATA?.status}
+            />
+          </GridItem>
         ) : (
-          <>
+          <GridItem area="poker">
             <Center>
               <Spinner />
             </Center>
-          </>
+          </GridItem>
         )}
       </PlainTemplate>
+
+      {ROOM_DATA.players && (
+        <Box
+          position="fixed"
+          bottom={0}
+          left={0}
+          right={0}
+          zIndex={20}
+          bg="rgba(33, 33, 33, 0.7)"
+          backdropFilter="blur(14px) saturate(150%)"
+          borderTop="1px solid rgba(255, 255, 255, 0.08)"
+          boxShadow="0 -12px 40px rgba(0, 0, 0, 0.4)"
+          py={4}
+        >
+          <Container maxW="container.xl">
+            <Text
+              fontSize="xs"
+              fontWeight={600}
+              color="dino.base1"
+              textTransform="uppercase"
+              letterSpacing="wide"
+              textAlign="center"
+              mb={2}
+            >
+              Pick your estimate
+            </Text>
+            <Stack
+              direction="row"
+              flexWrap="wrap"
+              w={["80vw", "80vw", "100%", "100%"]}
+              margin="0 auto"
+              justifyContent="center"
+            >
+              {VoteSystemOptions[ROOM_DATA.voteSystem]?.voteSystem.map(
+                (number: number) => (
+                  <Box key={number}>
+                    <CardPoints
+                      disabled={
+                        handleDisabled(ROOM_DATA.players) ||
+                        CURRENT_PLAYER === "spectator"
+                      }
+                      onClick={(vote) =>
+                        RoomsService.UPDATE_PLAYER({
+                          roomId: id,
+                          player: CURRENT_PLAYER?.id,
+                          value: CURRENT_PLAYER?.vote === vote ? 0 : vote,
+                          key: "vote",
+                        })
+                      }
+                      selected={CURRENT_PLAYER?.vote === number}
+                      point={number}
+                    />
+                  </Box>
+                )
+              )}
+            </Stack>
+          </Container>
+        </Box>
+      )}
     </>
   );
 };

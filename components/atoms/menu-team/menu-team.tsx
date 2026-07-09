@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Codepen, Server } from "react-feather";
 
 import { PlayerDataTeam } from "../../../model/PlayerData";
-import { getLocalStorage } from "../../../services/local-storage/handler";
+import { AuthService } from "../../../services/auth/auth.service";
 import { NotificationsService } from "../../../services/notifications/notifications.service";
 import { RoomsService } from "../../../services/rooms/rooms.service";
 import { IconButton } from "../../atoms/icon-button/icon-button";
@@ -27,7 +27,7 @@ export const MenuTeam = () => {
         roomId: id,
         key: "team",
         value: team,
-        player: getLocalStorage("user-client-key")
+        player: AuthService.getUid()
       })
       setCurrentTeam(team);
     } catch (err: any) {
