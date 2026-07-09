@@ -30,12 +30,10 @@ export const Nav = () => {
         justifyContent={id ? "space-between" : "center"}
       >
         <Box display="flex" alignItems="center" gap={6}>
-          <Link href="/">
-            <LinkChakra display="flex" alignItems="center" gap={2}>
-              <Image src="/dino3.svg" alt="Dino Poker" width={40} height={40} />
-              <DinoPoker />
-            </LinkChakra>
-          </Link>
+          <LinkChakra as={Link} href="/" display="flex" alignItems="center" gap={2}>
+            <Image src="/dino3.svg" alt="Dino Poker" width={40} height={40} />
+            <DinoPoker />
+          </LinkChakra>
         </Box>
         {id && <PokerMenu />}
       </Flex>
