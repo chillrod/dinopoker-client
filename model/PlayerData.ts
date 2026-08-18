@@ -14,6 +14,7 @@ export enum PlayerDataTeam {
   FRONTEND = 1,
   BACKEND = 2,
   UNKNOWN = 3,
+  FULLSTACK = 4,
 }
 
 export const InitializePlayerData = (player: IPlayerData): IPlayerData => ({
