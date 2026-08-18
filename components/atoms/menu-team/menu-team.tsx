@@ -2,7 +2,7 @@ import { Flex, Text } from "@chakra-ui/react";
 import useTranslation from "next-translate/useTranslation";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Codepen, Server } from "react-feather";
+import { Codepen, Layers, Server } from "react-feather";
 
 import { PlayerDataTeam } from "../../../model/PlayerData";
 import { AuthService } from "../../../services/auth/auth.service";
@@ -62,6 +62,13 @@ export const MenuTeam = () => {
           bg={currentTeam === PlayerDataTeam.BACKEND ? "dino.primary" : "dino.secondary"}
           ariaLabel={t("poker.actions.team-two")}
           icon={<Codepen />}
+        />
+        <IconButton
+          onClick={() => handleTeamChange(PlayerDataTeam.FULLSTACK)}
+          color={currentTeam === PlayerDataTeam.FULLSTACK ? "dino.secondary" : "dino.primary"}
+          bg={currentTeam === PlayerDataTeam.FULLSTACK ? "dino.primary" : "dino.secondary"}
+          ariaLabel={t("poker.actions.team-three")}
+          icon={<Layers />}
         />
       </Flex>
     </>

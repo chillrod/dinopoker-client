@@ -48,13 +48,14 @@ export const PokerCharacter = ({
       t("poker.actions.team-one"),
       t("poker.actions.team-two"),
       t("poker.actions.no-team"),
+      t("poker.actions.team-three"),
     ];
 
     return arrayState[team];
   };
 
   const parseCharacterTeamColor = (team: number) => {
-    const arrayState = ["", "yellow.400", "blue.300", ""];
+    const arrayState = ["", "yellow.400", "blue.300", "", "green.300"];
 
     return arrayState[team];
   };

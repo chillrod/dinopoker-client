@@ -33,6 +33,7 @@
       "copy-link-success": "Link copied to clipboard",
       "team-one": "Team Backend",
       "team-two": "Team Frontend",
+      "team-three": "Team Fullstack",
       "no-team": "No team",
       "reveal-votes": "Reveal votes",
       "restart-votes": "Restart votes",
